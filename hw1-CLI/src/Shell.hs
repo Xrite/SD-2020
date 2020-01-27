@@ -7,19 +7,18 @@ import           Control.Exception.Base
 import           Control.Monad
 import           Control.Monad.IO.Class
 import           Data.List
+import qualified Data.Map               as Map
 import qualified System.Directory       as Dir
 import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.Process
-import           Data.Map as Map
-
 
 data Env =
   Env
     { stdStream :: String
     , errStream :: String
-    , variables :: Map String String
+    , variables :: Map.Map String String
     }
 
 emptyEnv = Env "" "" Map.empty
@@ -65,7 +64,7 @@ instance Monad Shell where
     Shell $ \env -> do
       res <- runShell sh env
       case res of
-        Left code -> return $ Left code
+        Left code       -> return $ Left code
         Right (env', a) -> runShell (f a) env'
 
 instance MonadIO Shell where
@@ -78,7 +77,8 @@ loadVar var =
     return $ Right (env, val)
 
 storeVar :: String -> String -> Shell ()
-storeVar var val = Shell $ \env -> return $ Right (storeVarInEnv env var val, ())
+storeVar var val =
+  Shell $ \env -> return $ Right (storeVarInEnv env var val, ())
 
 exitCodeVariable = "?"
 
@@ -100,10 +100,12 @@ readFromStderr =
      in return $ Right (newEnv, input)
 
 writeToStdout :: String -> Shell ()
-writeToStdout str = Shell $ \env -> return $ Right (writeToEnvStdout env str, ())
+writeToStdout str =
+  Shell $ \env -> return $ Right (writeToEnvStdout env str, ())
 
 writeToStderr :: String -> Shell ()
-writeToStderr str = Shell $ \env -> return $ Right (writeToEnvStderr env str, ())
+writeToStderr str =
+  Shell $ \env -> return $ Right (writeToEnvStderr env str, ())
 
 getFileContents :: FilePath -> Shell (Either IOException String)
 getFileContents file = liftIO $ try (readFile file)
