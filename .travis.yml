@@ -1,0 +1,8 @@
+language: haskell
+ghc:
+  - "8.4.1"
+
+env:
+  - PACKAGEDIR="hw1-CLI"
+
+before_install: cd ${PACKAGEDIR}
