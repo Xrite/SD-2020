@@ -11,7 +11,7 @@ import           Shell
 import           System.Exit
 
 
-dispatch :: [String] -> Shell ExitCode
+dispatch :: (Shell sh) => [String] -> sh ExitCode
 dispatch [] = return $ ExitFailure 1
 dispatch words
   | cmd == "cat" = performCmd $ cat args
@@ -24,5 +24,5 @@ dispatch words
     cmd = head words
     args = tail words
 
-performCmd :: Shell ExitCode -> Shell ExitCode
+performCmd :: (ShellProcess sh, ShellExit sh) => sh ExitCode -> sh ExitCode
 performCmd sh = sh >>= setExitCode

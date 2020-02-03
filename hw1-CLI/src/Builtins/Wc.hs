@@ -6,7 +6,9 @@ import           Data.List
 import           Shell
 import           System.Exit
 
-wc :: [String] -> Shell ExitCode
+-- | Counts number of lines, words and bytes in each given file.
+-- If no file was given, the result for stdin will be printed.
+wc :: (ShellFileIO sh, ShellIO sh) => [String] -> sh ExitCode
 wc [] = do
   input <- readFromStdin
   let (lines, words, bytes) = countAll input
@@ -25,7 +27,7 @@ data Status
   | Failure
   deriving (Eq)
 
-wcFile :: String -> Shell Status
+wcFile :: (ShellFileIO sh, ShellIO sh) => String -> sh Status
 wcFile file = do
   result <- getFileContents file
   case result of

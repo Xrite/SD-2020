@@ -2,6 +2,7 @@ module CLI
   ( runMainLoop
   ) where
 
+import           ShellImpl
 import           Shell
 import           Interpreter
 
@@ -9,15 +10,15 @@ import           Interpreter
 prefix = "> "
 
 runMainLoop :: IO ()
-runMainLoop = mainLoop emptyEnv
+runMainLoop = loadEnvironment >>= mainLoop
 
 mainLoop env = do
   putStr prefix
   line <- getLine
-  res <- runShell (eval line) env
-  case res of
-    Left code -> putStrLn $ "Program exited with " ++ show code
-    Right (env', _) -> do
+  (code, env') <- runShell (eval line) env
+  if isTerminated env' then
+    putStrLn $ "Program exited with " ++ show code
+  else do
       putStr $ stdStream env'
       putStr $ errStream env'
       mainLoop $ dropStreams env'

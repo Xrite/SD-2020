@@ -25,6 +25,10 @@ dependencies:
 - process
 - directory
 - containers
+- hspec
+- smallcheck
+- QuickCheck
+- mtl
 
 library:
   source-dirs: src

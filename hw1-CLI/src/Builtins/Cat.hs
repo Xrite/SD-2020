@@ -6,7 +6,10 @@ import           Control.Exception
 import           Shell
 import           System.Exit
 
-cat :: [String] -> Shell ExitCode
+-- | Concatenates given files and prints them to the stdout.
+-- If one of the files was missing or an error has occured during file reading,
+-- it will print an error message to the stderr and will return 1.
+cat :: (ShellFileIO sh, ShellIO sh) => [String] -> sh ExitCode
 cat args = do
   results <- traverse catFile args
   return $
@@ -19,7 +22,7 @@ data Status
   | Failure
   deriving (Eq)
 
-catFile :: String -> Shell Status
+catFile :: (ShellFileIO sh, ShellIO sh) => String -> sh Status
 catFile file = do
   result <- getFileContents file
   case result of

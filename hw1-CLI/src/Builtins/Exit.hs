@@ -3,7 +3,8 @@ module Builtins.Exit where
 import           Shell
 import           System.Exit
 
-exit :: [String] -> Shell ExitCode
+-- | Exits shell with success code.
+exit :: (ShellExit sh) => [String] -> sh ExitCode
 exit args = do
   exitShell ExitSuccess
   return ExitSuccess

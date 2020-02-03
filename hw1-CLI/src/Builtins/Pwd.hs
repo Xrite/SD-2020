@@ -1,10 +1,14 @@
-module Builtins.Pwd where
+module Builtins.Pwd
+  ( pwd
+  )
+where
 
 import           Control.Monad.IO.Class
 import           Shell
 import           System.Exit
 
-pwd :: [String] -> Shell ExitCode
+-- | Prints current directory to the stdout.
+pwd :: (ShellIO sh, ShellEnv sh) => [String] -> sh ExitCode
 pwd args = do
   path <- getCurrentDirectory
   writeToStdout path
