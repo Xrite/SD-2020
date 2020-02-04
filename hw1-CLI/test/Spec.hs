@@ -38,12 +38,9 @@ main = hspec $ do
         it "does substitute unqouted strings" $ do
             let wrap s = [Token [CharSequence s]]
             applySubstitution (wrap "$x") `shouldBe` oneWord "x"
-            applySubstitution (wrap "$x $y") `shouldBe` oneWord "x y"
-            applySubstitution (wrap "$x $x") `shouldBe` oneWord "x x"
-            applySubstitution (wrap "$x$y") `shouldBe` oneWord "xy"
-            applySubstitution (wrap "$x   $y") `shouldBe` oneWord "x   y"
             applySubstitution (wrap "$xyz") `shouldBe` oneWord "xyz"
-            applySubstitution (wrap "$x z") `shouldBe` oneWord "x z"
+            applySubstitution (wrap "$x$x") `shouldBe` oneWord "xx"
+            applySubstitution (wrap "$x$y") `shouldBe` oneWord "xy"
     describe "parsing tests" $ do
         it "parse expression" $ 
             property prop_parseExpression
