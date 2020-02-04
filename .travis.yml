@@ -1,23 +1,24 @@
 sudo: true
+os:
+  - linux
+  - windows
+    
 language: haskell
-
-git:
-  depth: 5
 
 cache:
   directories:
   - "$HOME/.stack"
   - "$TRAVIS_BUILD_DIR/.stack-work"
 
-matrix:
-  Include:
-  - ghc: 8.6.5
-    env: STACK_YAML="$TRAVIS_BUILD_DIR/hw1-CLI/stack.yaml"
+ghc: 8.6.5
+env: 
+   - STACK_YAML="$TRAVIS_BUILD_DIR/hw1-CLI/stack.yaml"
+     DIR="hw1-CLI"
 
 install:
   - curl -sSL https://get.haskellstack.org/ | sh
   - stack --version
-  - cd hw1-CLI
+  - cd "$DIR"
   - stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
 script:
