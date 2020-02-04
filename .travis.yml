@@ -3,21 +3,21 @@ os:
   - linux
   - windows
     
-language: haskell
+language: generic
 
 cache:
   directories:
   - "$HOME/.stack"
   - "$TRAVIS_BUILD_DIR/.stack-work"
 
-ghc: 8.6.5
 env: 
-   - STACK_YAML="$TRAVIS_BUILD_DIR/hw1-CLI/stack.yaml"
-     DIR="hw1-CLI"
+  - DIR="hw1-CLI"
 
-install:
+before_install:
   - curl -sSL https://get.haskellstack.org/ | sh
   - stack --version
+
+install:
   - cd "$DIR"
   - stack build --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
