@@ -1,4 +1,7 @@
-module Interpreter where
+module Interpreter
+  ( eval
+  )
+where
 
 import           BuiltinDispatch
 import           Parser
@@ -8,9 +11,11 @@ import           System.Exit
 import           Text.Parsec
 import           Text.Parsec.String
 
-eval :: (Shell sh) => String -> sh ExitCode
+-- | Build and run command from textual representation (e.g. interpretation).
+eval :: (Shell sh) => String -- ^ command
+                   -> sh ExitCode -- ^ return code
 eval cmd = do
-  case parseExpression cmd of 
+  case parseExpression cmd of
     Left err -> do
       writeToStdout $ show err
       return $ ExitFailure 2
@@ -34,4 +39,4 @@ evalTokensList tokens = do
   exitCode <- applySubstitution tokens >>= dispatch
   setExitCode exitCode
 
-  
+

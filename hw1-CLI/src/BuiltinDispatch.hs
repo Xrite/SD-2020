@@ -1,4 +1,7 @@
-module BuiltinDispatch where
+module BuiltinDispatch
+  ( dispatch
+  )
+where
 
 import           Builtins.Cat
 import           Builtins.Echo
@@ -11,18 +14,18 @@ import           Shell
 import           System.Exit
 
 
+-- | Finds builtin command or execute or tries to run external process.
 dispatch :: (Shell sh) => [String] -> sh ExitCode
 dispatch [] = return $ ExitFailure 1
-dispatch words
-  | cmd == "cat" = performCmd $ cat args
-  | cmd == "echo" = performCmd $ echo args
-  | cmd == "wc" = performCmd $ wc args
-  | cmd == "pwd" = performCmd $ pwd args
-  | cmd == "exit" = performCmd $ exit args
-  | otherwise = performCmd $ runExternalProcess cmd args
-  where
-    cmd = head words
-    args = tail words
+dispatch words | cmd == "cat"  = performCmd $ cat args
+               | cmd == "echo" = performCmd $ echo args
+               | cmd == "wc"   = performCmd $ wc args
+               | cmd == "pwd"  = performCmd $ pwd args
+               | cmd == "exit" = performCmd $ exit args
+               | otherwise     = performCmd $ runExternalProcess cmd args
+ where
+  cmd  = head words
+  args = tail words
 
 performCmd :: (ShellProcess sh, ShellExit sh) => sh ExitCode -> sh ExitCode
 performCmd sh = sh >>= setExitCode

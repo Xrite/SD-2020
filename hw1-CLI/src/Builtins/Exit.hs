@@ -1,4 +1,7 @@
-module Builtins.Exit where
+module Builtins.Exit
+  ( exit
+  )
+where
 
 import           Shell
 import           System.Exit
