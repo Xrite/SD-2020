@@ -29,6 +29,9 @@ dependencies:
 - smallcheck
 - QuickCheck
 - mtl
+- regex-base
+- regex-posix
+- optparse-applicative
 
 library:
   source-dirs: src

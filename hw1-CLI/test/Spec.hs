@@ -13,6 +13,7 @@ import           Builtins.Echo
 import           Builtins.Exit
 import           Builtins.Pwd
 import           Builtins.Wc
+import           Builtins.Grep
 import           System.Exit
 import           System.Process                as Proc
 import Control.Exception
@@ -36,6 +37,7 @@ main = hspec $ do
     pwdSpec
     wcSpec
     externalProcessSpec
+    grepSpec
     parsingSpec
 
 substitutionSpec = do
@@ -78,8 +80,9 @@ newtype MockShell a = MockShellFileIO {runMockShell :: ((StateT FakeShellEnv IO)
 instance ShellFileIO MockShell where
     getFileContents file = do
         env <- get
-        let (Just res) = Map.lookup file (files env)
-        return $ Right res
+        case Map.lookup file (files env) of
+            Just res -> return $ Right res
+            Nothing -> liftIO (try (readFile "no such file exists"))
     
     writeToFile file cont = do
         env <- get 
@@ -234,3 +237,74 @@ externalProcessSpec = do
             let codeIO = evalStateT action env
             codeIO `shouldReturn` ExitSuccess 
             
+grepSpec = do
+    describe "Test grep" $ do
+        let fs = fromList [("file1", "aba caba")
+                        , ("file2", "caba\n228")
+                        , ("file3", "ora ora ora\nmuda muda muda\nora ora ora\nmuda muda muda")
+                        , ("file4", "SOME DATA")
+                        ]
+
+        it "matches simple patterns" $ do
+            let env = emptyFakeShell {stdin = "aba caba"}
+            let action = runMockShell (grep ["aba"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "aba caba\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess 
+
+        it "returns 1 when no match" $ do
+            let env = emptyFakeShell {stdin = "aba caba"}
+            let action = runMockShell (grep ["f"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` ""
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitFailure 1
+
+        it "returns 2 when no such file exists" $ do
+            let env = emptyFakeShell
+            let action = runMockShell (grep ["f", "file"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitFailure 2
+
+        it "matches patterns in files" $ do
+            let env = emptyFakeShell {files = fs}
+            let action = runMockShell (grep ["caba", "file1", "file2"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "aba caba\ncaba\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+
+        it "ignores case when -i is present" $ do
+            let env = emptyFakeShell {files = fs}
+            let action = runMockShell (grep ["some", "-i", "file4"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "SOME DATA\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+
+        it "prints trailing lines when -A is present" $ do
+            let env = emptyFakeShell {files = fs}
+            let action = runMockShell (grep ["ora", "file3", "-A", "2"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "ora ora ora\nmuda muda muda\nora ora ora\nmuda muda muda\n" 
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+
+        it "matches whole words when -w is present" $ do
+            let env = emptyFakeShell {stdin = "a aaa aa\nbab"}
+            let action = runMockShell (grep ["a", "-w"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "a aaa aa\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+
+
