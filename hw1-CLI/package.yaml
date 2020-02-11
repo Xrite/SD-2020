@@ -31,7 +31,7 @@ dependencies:
 - mtl
 - regex-base
 - optparse-applicative
-- regex-pcre
+- regex-tdfa
 
 library:
   source-dirs: src
