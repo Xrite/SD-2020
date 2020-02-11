@@ -7,7 +7,7 @@ import           Shell
 import           System.Exit
 import           Data.Char                      ( toLower )
 import           Text.Regex.Base
-import           Text.Regex.Posix
+import           Text.Regex.PCRE
 import           Options.Applicative
 import           Data.Semigroup                 ( (<>) )
 import           Debug.Trace

@@ -30,8 +30,8 @@ dependencies:
 - QuickCheck
 - mtl
 - regex-base
-- regex-posix
 - optparse-applicative
+- regex-pcre
 
 library:
   source-dirs: src
