@@ -123,7 +123,7 @@ buildMatch cfg line =
     in  if mts then Result [] else NoMatch
   where
     preprocess = if ignoreCase cfg then map toLower else id
-    pat = if wholeWords cfg then "\\<" ++ pattern cfg ++ "\\>" else pattern cfg
+    pat = if wholeWords cfg then "\\b" ++ pattern cfg ++ "\\b" else pattern cfg
 
 
 data Options = Options { optIgnoreCase :: Bool
