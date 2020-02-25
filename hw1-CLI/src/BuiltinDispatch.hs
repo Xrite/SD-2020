@@ -9,6 +9,8 @@ import           Builtins.Exit
 import           Builtins.Pwd
 import           Builtins.Wc
 import           Builtins.Grep
+import           Builtins.Ls
+import           Builtins.Cd
 import           Control.Exception
 import           Control.Monad.IO.Class
 import           Shell
@@ -24,6 +26,8 @@ dispatch words | cmd == "cat"  = performCmd $ cat args
                | cmd == "pwd"  = performCmd $ pwd args
                | cmd == "exit" = performCmd $ exit args
                | cmd == "grep" = performCmd $ grep args
+               | cmd == "ls"   = performCmd $ ls args
+               | cmd == "cd"   = performCmd $ cd args
                | otherwise     = performCmd $ runExternalProcess cmd args
  where
   cmd  = head words

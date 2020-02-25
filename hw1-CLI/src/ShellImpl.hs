@@ -86,6 +86,9 @@ instance ShellEnv ShellImpl where
         put $ storeVarInEnv env var val 
 
     getCurrentDirectory = liftIO $ Dir.getCurrentDirectory
+    getHomeDirectory = liftIO $ Dir.getHomeDirectory
+    setCurrentDirectory x = liftIO $ try (Dir.setCurrentDirectory x)
+    getDirectoryContents x = liftIO $ Dir.getDirectoryContents x
 
 instance ShellIO ShellImpl where
     readFromStdin = do

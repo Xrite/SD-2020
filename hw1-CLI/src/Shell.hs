@@ -10,6 +10,9 @@ class (Monad m) => ShellEnv m where
   loadVar :: String -> m String -- ^ Get variable by name
   storeVar :: String -> String -> m () -- ^ Store variable by name and given value
   getCurrentDirectory :: m String -- ^ Get current directory path
+  getHomeDirectory :: m FilePath -- ^ Get home directory path
+  setCurrentDirectory :: FilePath -> m (Either IOException ()) -- ^ Set current directory
+  getDirectoryContents :: FilePath -> m [FilePath] -- ^ Get current directory's contents
 
 -- | The 'ShellIO' class defines manipulations with standard inputs.
 class (Monad m) => ShellIO m where
