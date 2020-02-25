@@ -14,16 +14,25 @@ import           Builtins.Exit
 import           Builtins.Pwd
 import           Builtins.Wc
 import           Builtins.Grep
+import           Builtins.Ls
+import           Builtins.Cd
 import           System.Exit
+-- import           System.IO.Error
 import           System.Process                as Proc
-import Control.Exception
+import           Control.Exception
+import           Control.Exception.Base
+import           GHC.IO.Exception
+import           Debug.Trace
 
 newtype IdEnv a = IdEnv (Identity a) deriving (Functor, Applicative, Monad, Eq, Show)
 
 instance ShellEnv IdEnv where
     loadVar var = pure var
     storeVar var val = return ()
-    getCurrentDirectory = undefined 
+    getCurrentDirectory = undefined
+    getHomeDirectory = undefined
+    setCurrentDirectory = undefined
+    getDirectoryContents = undefined
 
 oneWord :: String -> IdEnv [String]
 oneWord s = pure [s]
@@ -31,6 +40,8 @@ oneWord s = pure [s]
 main :: IO ()
 main = hspec $ do
     substitutionSpec
+    lsSpec
+    cdSpec
     catSpec
     echoSpec
     exitSpec
@@ -38,7 +49,7 @@ main = hspec $ do
     wcSpec
     externalProcessSpec
     grepSpec
-    parsingSpec
+    -- parsingSpec
 
 substitutionSpec = do
     describe "Test substitution" $ do
@@ -138,6 +149,54 @@ instance ShellEnv MockShell where
     storeVar var val = undefined 
     
     getCurrentDirectory = return "/"
+    setCurrentDirectory path = do
+        env <- get
+        case Map.lookup path (files env) of
+            Just res -> return $ Right ()
+            Nothing -> return $ Left $ IOError Nothing NoSuchThing path "no such file exists" Nothing Nothing
+    getHomeDirectory = return "/home/tester"
+    getDirectoryContents "." = return [".", "..", "test_file"]
+    getDirectoryContents dir = return [".", ".."]
+
+lsSpec = do
+    describe "Test ls" $ do
+        let env = emptyFakeShell
+        it "ls ." $ do
+            let action = runMockShell (ls ["."])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` ".:\n.\n..\ntest_file\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+        it "ls empty" $ do
+            let action = runMockShell (ls ["src"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "src:\n.\n..\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+        it "ls multi" $ do
+            let action = runMockShell (ls ["src", "test"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> resIO `shouldReturn` "src:\n.\n..\ntest:\n.\n..\n"
+            stderr <$> resIO `shouldReturn` ""
+            codeIO `shouldReturn` ExitSuccess
+
+cdSpec = do
+    describe "Test cd" $ do
+        let fs = fromList [("dir", "")]
+        let env = emptyFakeShell {files = fs}
+        it "cd existing dir" $ do
+            let action = runMockShell (cd ["dir"]) 
+            stdin <$> (execStateT action env) `shouldReturn` ""
+        it "cd non-existing dir" $ do
+            let action = runMockShell (cd ["notdir"])
+            let resIO = execStateT action env
+            let codeIO = evalStateT action env
+            stdin <$> (execStateT action env) `shouldReturn` ""
+            stderr <$> resIO `shouldReturn` "notdir: does not exist (no such file exists)\n"
+            codeIO `shouldReturn` (ExitFailure 1)
 
 
 catSpec = do

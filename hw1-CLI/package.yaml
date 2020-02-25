@@ -32,6 +32,7 @@ dependencies:
 - regex-base
 - optparse-applicative
 - regex-tdfa
+- filepath
 
 library:
   source-dirs: src
