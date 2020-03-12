@@ -129,6 +129,7 @@ instance ShellProcess ShellImpl where
                 return $ ExitFailure 127
             Right (code, stdout, stderr) -> do
                 writeToStdout stdout
+                writeToStderr stderr
                 return code
 
 instance ShellExit ShellImpl where
