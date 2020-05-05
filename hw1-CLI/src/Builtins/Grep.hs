@@ -10,6 +10,7 @@ import           Text.Regex.Base
 import           Text.Regex.TDFA
 import           Options.Applicative
 import           Data.Semigroup                 ( (<>) )
+import           Data.Maybe
 import           Debug.Trace
 
 
@@ -31,30 +32,41 @@ grep args = do
     where opts = info parser (fullDesc)
 
 onSuccess :: (ShellIO sh, ShellFileIO sh) => Options -> sh ExitCode
-onSuccess opts = do
-    let cfg = Config { ignoreCase = optIgnoreCase opts
-                     , wholeWords = optWholeWords opts
-                     , pattern    = optPattern opts
-                     , nextLines  = optNextLines opts
-                     }
-    case optFiles opts of
+onSuccess opts = case validateConfig cfg of
+    Left  err -> writeToStderr err >> return (ExitFailure 1)
+    Right _   -> afterValidate
+  where
+    cfg = Config { ignoreCase = optIgnoreCase opts
+                 , wholeWords = optWholeWords opts
+                 , pattern    = optPattern opts
+                 , nextLines  = optNextLines opts
+                 }
+    getExitCode codes =
+        if any (== (ExitFailure 2)) codes then ExitFailure 2 else last codes
+    afterValidate = case optFiles opts of
         [] -> do
             readFromStdin >>= grepString cfg
         files -> do
             getExitCode <$> traverse (grepFile cfg) files
+
+validateConfig :: Config -> Either String ()
+validateConfig cfg = do
+    checkNonNegativeNextLines
   where
-    getExitCode codes =
-        if any (== (ExitFailure 2)) codes then ExitFailure 2 else last codes
+    checkNonNegativeNextLines
+        | nextLines cfg >= 0 = Right ()
+        | otherwise          = Left "number of lines have to be non negative\n"
+
 
 onFailure :: (ShellIO sh) => ParserFailure ParserHelp -> sh ExitCode
 onFailure failure = do
     let (msg, code) = renderFailure failure "failure"
-    writeToStderr msg
+    writeToStderr (msg ++ "\n")
     return code
 
 onCompletion :: (ShellIO sh) => sh ExitCode
 onCompletion = do
-    writeToStderr "No completion support"
+    writeToStderr "No completion support\n"
     return $ ExitFailure 2
 
 grepFile :: (ShellIO sh, ShellFileIO sh) => Config -> String -> sh ExitCode
@@ -118,17 +130,15 @@ printResult cfg keep (x : xs) (y : ys) = do
                 printResult cfg (nextLines cfg) xs ys
 
 buildMatch :: Config -> String -> Result
-buildMatch cfg line = 
+buildMatch cfg line =
     let mts = (preprocess line =~ pat :: Bool)
     in  if mts then Result [] else NoMatch
   where
     preprocess = if ignoreCase cfg then map toLower else id
-    unified 
-        | ignoreCase cfg = map toLower (pattern cfg)
-        | otherwise = pattern cfg
-    pat 
-        | wholeWords cfg = "\\b" ++ unified ++ "\\b" 
-        | otherwise = unified
+    unified | ignoreCase cfg = map toLower (pattern cfg)
+            | otherwise      = pattern cfg
+    pat | wholeWords cfg = "\\b" ++ unified ++ "\\b"
+        | otherwise      = unified
 
 
 data Options = Options { optIgnoreCase :: Bool
