@@ -118,12 +118,17 @@ printResult cfg keep (x : xs) (y : ys) = do
                 printResult cfg (nextLines cfg) xs ys
 
 buildMatch :: Config -> String -> Result
-buildMatch cfg line =
+buildMatch cfg line = 
     let mts = (preprocess line =~ pat :: Bool)
     in  if mts then Result [] else NoMatch
   where
     preprocess = if ignoreCase cfg then map toLower else id
-    pat = if wholeWords cfg then "\\b" ++ pattern cfg ++ "\\b" else pattern cfg
+    unified 
+        | ignoreCase cfg = map toLower (pattern cfg)
+        | otherwise = pattern cfg
+    pat 
+        | wholeWords cfg = "\\b" ++ unified ++ "\\b" 
+        | otherwise = unified
 
 
 data Options = Options { optIgnoreCase :: Bool
